@@ -1,24 +1,6 @@
-# AI-Powered Movie Finder
-
-This repository is a sample project demonstrating how to write tests using the Vercel AI SDK.
-
-## Features
-
-- **AI-Powered Movie Finder**: Choose a genre and movie length, and let the AI recommend what to watch.
-- **Testing with Vercel AI SDK**: Learn how to write tests for components and functionality powered by AI.
+# AI-Powered House Prices Chats
 
 ## Getting Started
-
-To use this example, clone the repository and install dependencies:
-
-```sh
-git clone git@github.com:snowleo208/ai-movie-finder.git
-cd ai-movie-finder
-cp apps/web/env.example apps/web/.env # Add your Groq API key to the `.env` file before running the app
-pnpm install
-```
-
-## Build and Develop
 
 ### Build
 
