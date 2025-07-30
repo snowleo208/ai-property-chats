@@ -1,0 +1,25 @@
+{
+  "name": "ai-renovate",
+  "private": true,
+  "scripts": {
+    "build": "dotenvx run -- turbo build",
+    "dev": "dotenvx run -- turbo dev",
+    "lint": "dotenvx run -- turbo lint",
+    "test": "dotenvx run -- turbo run test",
+    "test:watch": "dotenvx run -- turbo run test:watch",
+    "format": "dotenvx run -- prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "1.44.2",
+    "prettier": "3.5.3",
+    "turbo": "2.5.4",
+    "typescript": "5.8.3"
+  },
+  "packageManager": "pnpm@9.12.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "volta": {
+    "node": "22.17.0"
+  }
+}
