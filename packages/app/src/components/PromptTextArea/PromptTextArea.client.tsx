@@ -1,7 +1,5 @@
 "use client";
-
 import { Box, Button, Flex, TextArea } from "@radix-ui/themes";
-
 
 export type PromptTextAreaProps = {
   isLoading: boolean;

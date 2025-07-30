@@ -39,3 +39,5 @@ export const Charts = ({ data }: { data: string }) => {
         showLoading={isChartLoading}
     />;
 }
+
+export default Charts;

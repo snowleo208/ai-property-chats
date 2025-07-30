@@ -1,9 +1,8 @@
+import React, { lazy, Suspense } from 'react';
 import { Em, Heading, Link, Separator, Strong, Text } from '@radix-ui/themes';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { Charts } from '../Charts/Charts.client';
-import React from 'react';
 
 type CustomComponents = Components & {
     [key: string]: any; // allow unknown tag handlers
@@ -13,12 +12,13 @@ type MarkdownComponentProps = {
     content: string
 };
 
+const DynamicCharts = lazy(() => import('../Charts/Charts.client'));
 
 export const MarkdownComponent = ({ content }: MarkdownComponentProps) => {
     const customComponents: CustomComponents = {
         'echarts-option': ({ children }: any) => {
             // TODO: re-render when typing
-            return <Charts data={children} />;
+            return <Suspense fallback={<div></div>}><DynamicCharts data={children} /></Suspense>;
         }
     };
 
