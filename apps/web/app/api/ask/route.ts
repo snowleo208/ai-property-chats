@@ -2,6 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { NextRequest } from 'next/server';
 import { streamText, embed } from 'ai';
+import { tools } from './tools';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -42,19 +43,19 @@ export async function POST(req: NextRequest) {
         })
         .join('\n\n');
 
-
     const result = streamText({
         model: openai('gpt-4o'),
         onError: (error) => {
             console.error("Error in AI response:", error)
         },
         abortSignal: req.signal,
+        tools,
         prompt: `
             Based on the following question, please select the most relevant segments from the provided text, and extract the corresponding data (e.g., price trends, average house prices, sales volume, etc.) in the following format:
 
             A brief summary
 
-            If applicable, wrap chart data inside <echarts-option> tags so it can be parsed by the frontend
+            Use the generateChart tool to generate charts
 
             Include the source page number and source link for each data point
 
@@ -65,22 +66,38 @@ export async function POST(req: NextRequest) {
             ${lastUserMessage}
         `,
         system: `
-                You are a real estate data analysis assistant. Please answer the user's question based on the provided text segments, and organize the data into a JSON format suitable for frontend chart rendering.
-                
-                If the user says something unrelated (e.g., greetings, jokes, or personal questions), respond briefly and politely, and do not reference real estate data.
+                You are a real estate data analysis assistant.
 
-                If the user requests a visual chart, generate a JSON structure compatible with Apache ECharts, and wrap it inside <echarts-option>...</echarts-option> tags.
+                You will be provided with user questions and supporting text segments that contain housing market data (e.g., prices, trends, volume). Your goal is to:
 
-                The ECharts JSON should include the following fields: title, xAxis, yAxis, series, and tooltip.
-                The xAxis should represent categories (e.g., months), while the yAxis should represent corresponding values (e.g., housing prices or growth rates).
-                The series should be either a line chart or a bar chart.
+                1. Answer the user's question based on the data.
+                2. If the user asks for a chart, graph, or visualization, use the generateChart tool.
 
-                Only generate a chart wrapped in <echarts-option>...</echarts-option> if the user explicitly asks for a visual, chart, or graph. Otherwise, do not include any chart.
+                Only use the tool if the user asks for a visual representation.
 
-                Please determine the appropriate chart type (e.g., line, bar) automatically based on the data and configure it correctly.
+                If you use the generateChart tool to create a chart, you must also include a short explanation in natural language before or after the chart, describing the key insights (e.g., trends, comparisons).
 
-                Additionally, provide a brief explanation and include the page number and a markdown-formatted source link for each data point, for example:
-                [Page 2, Zoopla House Price Index Jun 2025](https://assets.ctfassets.net/02vwvgr6spsr/1Tdp6H6MvjpVtbzoo2erEt/f1150fdc8d355e35166f8e88a9498d12/UK_House_Price_Index_June25_final_ZP.pdf)
+                For example:
+
+                "The chart below shows a steady increase in average house prices from January to March 2025. London consistently had higher prices compared to Manchester."
+
+                Then call the generateChart tool. When calling the generateChart tool, use the following format:
+
+                - title: A short title for the chart (e.g., "Average House Prices 2024")
+                - type: Either "line" or "bar", based on what best suits the data
+                - legendData: A list of string labels (e.g., months, regions)
+                - xAxis: A list of string labels (e.g., months, regions)
+                - series: An array of one or more data series objects:
+                - type: Same as the chart type ("bar" or "line")
+                - name: The label for this series (e.g., "London")
+                - data: A list of numbers matching the xAxis order
+
+                Do not use any other format (like yAxis, dataset, or seriesName). Only use the fields defined above.
+
+                Also cite the source for each data point using the following format:
+                [Page X, Report Title](source_url)
+
+                If the user asks something unrelated to real estate or data (e.g., greetings or jokes), respond politely and briefly, and do not generate or reference any chart or data.
         `
     });
 

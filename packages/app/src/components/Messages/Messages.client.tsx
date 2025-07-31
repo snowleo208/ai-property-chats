@@ -1,56 +1,98 @@
-import { Box, Button, Callout, Flex, ScrollArea, Spinner, Strong, VisuallyHidden } from "@radix-ui/themes";
+'use client';
+
+import dynamic from 'next/dynamic';
+
+import { Button, Callout, Flex, Grid, Heading, ScrollArea, Spinner } from "@radix-ui/themes";
 import { UIMessage } from "ai"
 import { MarkdownComponent } from "../MarkdownComponent/MarkdownComponent.client";
+
+const DynamicCharts = dynamic(() => import('../Charts/Charts.client'), {
+    ssr: false
+});
 
 export type MessagesProps = {
     isLoading: boolean;
     error: Error | undefined;
     messages: UIMessage[];
     onDefaultQuestionsClick: (question: string) => void;
+    status: "submitted" | "streaming" | "ready" | "error";
 }
 
 const QUESTION_SET = [
     "What’s the average house price in the UK this year?",
     "What are the housing trends in London?",
-    "Can you show me a chart of average prices over the past 6 months?",
+    "Show me a chart of average prices over the past 6 months",
     "Is the market more active now compared to last year?"
 ]
 
-export const Messages = ({ onDefaultQuestionsClick, error, isLoading, messages }: MessagesProps) => {
+export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesProps) => {
     return (
         <ScrollArea type="auto" scrollbars="vertical" style={{ height: '70vh', padding: '1rem', borderRadius: 'var(--radius-4)' }} data-testid="scroll-area">
-            <Flex gap="2">
+            <Flex direction="column" width="100%" gap="2">
 
-                {messages.length === 0 && <div>
-                    <Flex gap="2" direction="column">
-                        {QUESTION_SET.map(item => (<Button variant="soft" onClick={() => onDefaultQuestionsClick(item)} style={{ justifyContent: 'flex-start' }} size="3" key={item}>{item}</Button>))}
+                {messages.length === 0 &&
+
+                    <Flex direction="column" gapY="4">
+                        <Heading as="h1">How can I help you today?</Heading>
+                        <Grid gap="3" width="100%">
+                            {QUESTION_SET.map(item => (
+                                <Button
+                                    variant="soft"
+                                    onClick={() => onDefaultQuestionsClick(item)}
+                                    style={{ justifyContent: 'flex-start' }}
+                                    size="3"
+                                    key={item}>
+                                    {item}
+                                </Button>
+                            ))}
+                        </Grid>
                     </Flex>
-                </div>}
+
+                }
 
                 {messages && (
-                    <Flex direction="column" gap="2" data-testid="completion">
+                    <Flex direction="column" gap="2" data-testid="completion" width="100%">
                         {/* TODO: styles for mobile */}
                         {messages.map((message, index) => (
-                            (<Box style={message.role === 'user' ? { background: "var(--gray-a2)", alignSelf: 'flex-start', padding: '1rem', marginBottom: 8, borderRadius: "var(--radius-4)" } : undefined} key={index}>
-                                <Strong>{message.role === 'user' ? '' : 'AI: '}</Strong>
-
-                                {status === 'submitted' && message.role === 'assistant' && <div>
-                                    <Spinner />
-                                    <VisuallyHidden>Loading...</VisuallyHidden>
-                                </div>}
-
+                            (<Flex direction="column" gap="2" style={message.role === 'user' ? { background: "var(--gray-a2)", alignSelf: 'flex-end', borderRadius: "var(--radius-4)" } : undefined} key={index} p="3">
                                 <MarkdownComponent content={`${message.content}`} key={`${message}_${index}`} />
-                            </Box>)
+
+
+                                <>
+                                    {message.toolInvocations?.map(toolInvocation => {
+                                        const { toolName, toolCallId, state } = toolInvocation;
+
+                                        if (state === 'result') {
+                                            if (toolName === 'generateChart') {
+                                                const { result } = toolInvocation;
+                                                return (
+                                                    <div data-testid={`chart-${toolCallId}`} key={toolCallId}>
+                                                        <DynamicCharts data={result} />
+                                                    </div>
+                                                );
+                                            }
+                                        } else {
+                                            return (
+                                                <div key={toolCallId}>
+                                                    {toolName === 'generateChart' ? (
+                                                        <div><Spinner /> Loading charts...</div>
+                                                    ) : null}
+                                                </div>
+                                            );
+                                        }
+                                    })}
+                                </>
+                            </Flex>)
                         ))}
                     </Flex>
                 )}
             </Flex>
 
             <div aria-live="polite">
-                {isLoading && error && (
+                {error && (
                     <Callout.Root color="red">
                         <Callout.Text>
-                            {error.message.includes('limit') ? 'You have reached the limit of requests.' : 'Sorry, something went wrong.'}
+                            Sorry, something went wrong, please try again.
                         </Callout.Text>
                     </Callout.Root>
                 )}

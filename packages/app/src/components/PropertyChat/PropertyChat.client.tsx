@@ -1,21 +1,21 @@
 "use client";
 
-import React from "react";
-import { Separator } from "@radix-ui/themes";
+import React, { useState } from "react";
 
 import { useChat } from '@ai-sdk/react';
 import { PromptTextArea } from "../PromptTextArea/PromptTextArea.client";
 import Messages from "../Messages/Messages.client";
 
 export const PropertyChat = () => {
-  const { input, setInput, messages, append, stop, error, status } = useChat({
+  const [currentInputValue, setCurrentInputValue] = useState('');
+  const { messages, append, stop, error, status } = useChat({
     api: '/api/ask',
-    experimental_throttle: 50
+    experimental_throttle: 100
   });
 
   const onInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
-    setInput(e.target.value);
+    setCurrentInputValue(e.target.value);
   }
 
   const onDefaultQuestionsClick = (value: string) => {
@@ -25,13 +25,23 @@ export const PropertyChat = () => {
     })
   }
 
-  const onSubmit = () => {
+  const onStop = (e: React.FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    stop();
+  }
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>) => {
+    e.preventDefault();
+    if (currentInputValue === '') {
+      return;
+    }
+
     append({
       role: 'user',
-      content: input,
+      content: currentInputValue,
     })
 
-    setInput('');
+    setCurrentInputValue('');
   }
 
   const isLoading = (status === 'submitted' || status === 'streaming');
@@ -43,15 +53,14 @@ export const PropertyChat = () => {
         error={error}
         onDefaultQuestionsClick={onDefaultQuestionsClick}
         messages={messages}
+        status={status}
       />
-
-      <Separator my="3" size="4" />
 
       <PromptTextArea
         isLoading={isLoading}
-        onStop={stop}
+        onStop={onStop}
         onSubmit={onSubmit}
-        inputValue={input}
+        inputValue={currentInputValue}
         onInputChange={onInputChange}
       />
     </>
