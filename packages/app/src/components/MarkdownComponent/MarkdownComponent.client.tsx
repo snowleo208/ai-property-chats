@@ -16,8 +16,8 @@ const DynamicCharts = lazy(() => import('../Charts/Charts.client'));
 
 export const MarkdownComponent = ({ content }: MarkdownComponentProps) => {
     const customComponents: CustomComponents = {
+        // TODO: fix `any` here
         'echarts-option': ({ children }: any) => {
-            // TODO: re-render when typing
             return <Suspense fallback={<div></div>}><DynamicCharts data={children} /></Suspense>;
         }
     };

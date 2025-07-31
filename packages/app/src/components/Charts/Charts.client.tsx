@@ -13,7 +13,6 @@ export const Charts = ({ data }: { data: string }) => {
         }
 
         try {
-            console.log(data)
             const parsedData = JSON.parse(data);
             setRenderableChartJson(parsedData);
             setIsChartLoading(false);
