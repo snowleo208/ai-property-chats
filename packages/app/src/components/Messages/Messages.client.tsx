@@ -106,7 +106,6 @@ export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesP
                             (<Flex direction="column" gap="2" style={message.role === 'user' ? { background: "var(--gray-a2)", alignSelf: 'flex-end', borderRadius: "var(--radius-4)" } : { minHeight: 500 }} key={index} p="3">
                                 <MarkdownComponent content={`${message.content}`} key={`${message}_${index}`} />
 
-
                                 <>
                                     {message.toolInvocations?.map(generateTools)}
                                 </>
