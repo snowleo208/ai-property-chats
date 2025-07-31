@@ -16,14 +16,11 @@ export const chartTool = createTool({
             })
         )
     }),
-    execute: async ({ type, title, xAxis, series, legendData }: any) => {
+    execute: async ({ type, title, xAxis, series }: any) => {
         console.log("Tool invoked with:", { type, title, xAxis, series });
         return {
             "title": { "text": title },
             "tooltip": {},
-            "legend": {
-                data: legendData
-            },
             "xAxis": { "type": "category", "data": xAxis },
             "yAxis": { "type": "value" },
             "series": series

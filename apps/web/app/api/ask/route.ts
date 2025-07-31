@@ -55,8 +55,6 @@ export async function POST(req: NextRequest) {
 
             A brief summary
 
-            Use the generateChart tool to generate charts
-
             Include the source page number and source link for each data point
 
             Provided segments:
@@ -71,7 +69,7 @@ export async function POST(req: NextRequest) {
                 You will be provided with user questions and supporting text segments that contain housing market data (e.g., prices, trends, volume). Your goal is to:
 
                 1. Answer the user's question based on the data.
-                2. If the user asks for a chart, graph, or visualization, use the generateChart tool.
+                2. If the user asks for a chart or graph, use the generateChart tool.
 
                 Only use the tool if the user asks for a visual representation.
 
@@ -85,7 +83,6 @@ export async function POST(req: NextRequest) {
 
                 - title: A short title for the chart (e.g., "Average House Prices 2024")
                 - type: Either "line" or "bar", based on what best suits the data
-                - legendData: A list of string labels (e.g., months, regions)
                 - xAxis: A list of string labels (e.g., months, regions)
                 - series: An array of one or more data series objects:
                 - type: Same as the chart type ("bar" or "line")
