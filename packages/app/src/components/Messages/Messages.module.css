@@ -1,0 +1,24 @@
+.messages {
+    display: block;
+    position: relative;
+    overflow-y: auto;
+    height: 70vh;
+    padding: 1rem;
+    border-radius: var(--radius-4);
+}
+
+.userMessage {
+    background: var(--gray-a2);
+    align-self: flex-end;
+    border-radius: var(--radius-4);
+}
+
+.assistantMessage {
+    min-height: 400px;
+}
+
+.bottomButton {
+    position: fixed;
+    bottom: 15vh;
+    left: 50%;
+}

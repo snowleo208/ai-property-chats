@@ -1,5 +1,5 @@
 import { tool as createTool } from 'ai';
-import { z } from 'zod';
+import { z } from "zod/v3";
 
 export const chartTool = createTool({
     description: "Generate a chart from structured housing data",
@@ -31,17 +31,3 @@ export const chartTool = createTool({
 export const tools = {
     generateChart: chartTool,
 };
-
-// import { tool as createTool } from 'ai';
-// import { z } from 'zod';
-
-// export const weatherTool = createTool({
-//   description: 'Generate a chart from structured housing data',
-//   parameters: z.object({
-//     location: z.string().describe('The location to get the weather for'),
-//   }),
-//   execute: async function ({ location }) {
-//     await new Promise(resolve => setTimeout(resolve, 2000));
-//     return { weather: 'Sunny', temperature: 75, location };
-//   },
-// });

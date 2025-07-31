@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-import { Box, Callout, Card, Flex, IconButton, ScrollArea, Spinner, Text } from "@radix-ui/themes";
+import { Box, Callout, Card, Flex, IconButton, Spinner, Text } from "@radix-ui/themes";
 import { ToolInvocation, UIMessage } from "ai"
 import { MarkdownComponent } from "../MarkdownComponent/MarkdownComponent.client";
 import { WelcomeScreen } from '../WelcomeScreen/WelcomeScreen';
+import styles from './Messages.module.css';
 
 const DynamicCharts = dynamic(() => import('../Charts/Charts.client'), {
     ssr: false
@@ -92,18 +93,16 @@ export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesP
 
 
     return (
-        <ScrollArea type="auto" scrollbars="vertical" style={{ height: '70vh', padding: '1rem', borderRadius: 'var(--radius-4)' }} data-testid="scroll-area" ref={scrollRef}>
+        <Box className={styles.messages} data-testid="scroll-area" ref={scrollRef}>
             <Flex direction="column" width="100%" gap="2">
-
                 {messages.length === 0 &&
                     <WelcomeScreen onDefaultQuestionsClick={onDefaultQuestionsClick} />
                 }
 
                 {messages && (
                     <Flex direction="column" gap="2" data-testid="completion" width="100%">
-                        {/* TODO: styles for mobile */}
                         {messages.map((message, index) => (
-                            (<Flex direction="column" gap="2" style={message.role === 'user' ? { background: "var(--gray-a2)", alignSelf: 'flex-end', borderRadius: "var(--radius-4)" } : { minHeight: 500 }} key={index} p="3">
+                            (<Flex direction="column" gap="2" className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} key={index} p="3">
                                 <MarkdownComponent content={`${message.content}`} key={`${message}_${index}`} />
 
                                 <>
@@ -119,15 +118,17 @@ export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesP
 
             <div aria-live="polite">
                 {error && (
-                    <Callout.Root color="red">
-                        <Callout.Text>
-                            Sorry, something went wrong, please try again.
-                        </Callout.Text>
-                    </Callout.Root>
+                    <Box pt="2">
+                        <Callout.Root variant="surface" size="1" color="red">
+                            <Callout.Text>
+                                Sorry, something went wrong, please try again.
+                            </Callout.Text>
+                        </Callout.Root>
+                    </Box>
                 )}
             </div>
 
-            {!isAtBottom && <Box style={{ position: 'absolute', bottom: 16, left: '50%' }}>
+            {!isAtBottom && <Box className={styles.bottomButton}>
                 <IconButton onClick={onBottomButtonClick} variant="surface" color="gray" radius='full'>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1" />
@@ -135,7 +136,7 @@ export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesP
 
                 </IconButton>
             </Box>}
-        </ScrollArea>
+        </Box>
     )
 }
 
