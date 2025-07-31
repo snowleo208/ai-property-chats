@@ -3,6 +3,9 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import { NextRequest } from 'next/server';
 import { streamText, embed } from 'ai';
 
+// Allow streaming responses up to 30 seconds
+export const maxDuration = 30;
+
 const qdrant = new QdrantClient({
     url: process.env.QDRANT_URL!,
     apiKey: process.env.QDRANT_API_KEY!
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
                 Please determine the appropriate chart type (e.g., line, bar) automatically based on the data and configure it correctly.
 
                 Additionally, provide a brief explanation and include the page number and a markdown-formatted source link for each data point, for example:
-                [House Price Index June 2025](https://assets.ctfassets.net/02vwvgr6spsr/1Tdp6H6MvjpVtbzoo2erEt/f1150fdc8d355e35166f8e88a9498d12/UK_House_Price_Index_June25_final_ZP.pdf)
+                [Page 2, Zoopla House Price Index Jun 2025](https://assets.ctfassets.net/02vwvgr6spsr/1Tdp6H6MvjpVtbzoo2erEt/f1150fdc8d355e35166f8e88a9498d12/UK_House_Price_Index_June25_final_ZP.pdf)
         `
     });
 

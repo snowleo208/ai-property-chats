@@ -2,6 +2,7 @@
 import { Box, Button, Flex, TextArea } from "@radix-ui/themes";
 
 export type PromptTextAreaProps = {
+  inputValue: string;
   isLoading: boolean;
   onStop: () => void;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -9,6 +10,7 @@ export type PromptTextAreaProps = {
 };
 
 export const PromptTextArea = ({
+  inputValue,
   isLoading,
   onStop,
   onInputChange,
@@ -25,7 +27,7 @@ export const PromptTextArea = ({
       <form onSubmit={handleSubmit}>
         <Flex gap="2">
           <Box maxWidth="90%" flexGrow="1">
-            <TextArea placeholder="Ask a question about the UK housing market" onChange={onInputChange} />
+            <TextArea placeholder="Ask a question about the UK housing market" onChange={onInputChange} value={inputValue} />
           </Box>
 
           {isLoading ? (<Button onClick={onStop} disabled={!isLoading}>Stop</Button>) : (<Button type="submit" disabled={isLoading}>Ask</Button>)}

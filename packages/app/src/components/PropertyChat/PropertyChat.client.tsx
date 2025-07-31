@@ -14,9 +14,8 @@ const QUESTION_SET = [
 ]
 
 export const PropertyChat = () => {
-  const { messages, handleSubmit, stop, error, status, setInput } = useChat({
-    api: '/api/ask',
-    initialInput: "",
+  const { input, setInput, messages, append, stop, error, status } = useChat({
+    api: '/api/ask'
   });
 
   const onInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -25,13 +24,20 @@ export const PropertyChat = () => {
   }
 
   const onButtonClick = (value: string) => {
-    // TODO: fix this, only work when clicked twice
-    setInput(value);
-    handleSubmit();
+    append({
+      role: 'user',
+      content: value,
+    })
   }
 
-  const isLoading = status === 'submitted';
-  const isStreaming = status === 'streaming';
+  const onSubmit = () => {
+    append({
+      role: 'user',
+      content: input,
+    })
+  }
+
+  const isLoading = (status === 'submitted' || status === 'streaming');
 
   return (
     <>
@@ -51,7 +57,7 @@ export const PropertyChat = () => {
                 (<Box style={message.role === 'user' ? { background: "var(--gray-a2)", alignSelf: 'flex-start', padding: '1rem', marginBottom: 8, borderRadius: "var(--radius-4)" } : undefined} key={index}>
                   <Strong>{message.role === 'user' ? '' : 'AI: '}</Strong>
 
-                  {isLoading && message.role === 'assistant' && <div>
+                  {status === 'submitted' && message.role === 'assistant' && <div>
                     <Spinner />
                     <VisuallyHidden>Loading...</VisuallyHidden>
                   </div>}
@@ -77,9 +83,10 @@ export const PropertyChat = () => {
       <Separator my="3" size="4" />
 
       <PromptTextArea
-        isLoading={isStreaming}
+        isLoading={isLoading}
         onStop={stop}
-        onSubmit={handleSubmit}
+        onSubmit={onSubmit}
+        inputValue={input}
         onInputChange={onInputChange}
       />
     </>
