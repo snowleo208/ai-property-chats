@@ -5,17 +5,18 @@ import React, { useState } from "react";
 import { useChat } from '@ai-sdk/react';
 import { PromptTextArea } from "../PromptTextArea/PromptTextArea.client";
 import Messages from "../Messages/Messages.client";
+import { Header } from "../Header/Header";
 
 export const PropertyChat = () => {
   const [currentInputValue, setCurrentInputValue] = useState('');
-  const { messages, append, stop, error, status } = useChat({
+  const { setMessages, messages, append, stop, error, status } = useChat({
     api: '/api/ask',
     experimental_throttle: 100
   });
 
-  const onInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const onStop = (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setCurrentInputValue(e.target.value);
+    stop();
   }
 
   const onDefaultQuestionsClick = (value: string) => {
@@ -25,9 +26,11 @@ export const PropertyChat = () => {
     })
   }
 
-  const onStop = (e: React.FormEvent<HTMLButtonElement>) => {
+  const onClickStartButton = (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     stop();
+    setMessages([]);
+    setCurrentInputValue('');
   }
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement | HTMLTextAreaElement>) => {
@@ -44,10 +47,16 @@ export const PropertyChat = () => {
     setCurrentInputValue('');
   }
 
+  const onInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    setCurrentInputValue(e.target.value);
+  }
+
   const isLoading = (status === 'submitted' || status === 'streaming');
 
   return (
     <>
+      <Header onClickStartButton={onClickStartButton} />
       <Messages
         isLoading={isLoading}
         error={error}
