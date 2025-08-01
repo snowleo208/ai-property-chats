@@ -20,7 +20,10 @@ export const chartTool = createTool({
         console.log("Tool invoked with:", { type, title, xAxis, series });
         return {
             "title": { "text": title },
-            "tooltip": {},
+            "tooltip": {
+                "trigger": "axis",
+                "axisPointer": { "type": "cross" }
+            },
             "xAxis": { "type": "category", "data": xAxis },
             "yAxis": { "type": "value" },
             "series": series

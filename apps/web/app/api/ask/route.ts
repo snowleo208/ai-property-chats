@@ -13,44 +13,45 @@ const qdrant = new QdrantClient({
 });
 
 export async function POST(req: NextRequest) {
-    const { messages } = await req.json();
+    try {
+        const { messages } = await req.json();
 
-    // TODO: do type validation on incoming messages
-    const lastUserMessage = messages.filter((m: { role: string }) => m.role === 'user').at(-1)?.content;
+        // TODO: do type validation on incoming messages
+        const lastUserMessage = messages.filter((m: { role: string }) => m.role === 'user').at(-1)?.content;
 
-    if (!lastUserMessage) {
-        throw new Error('No user message to embed');
-    }
+        if (!lastUserMessage) {
+            throw new Error('No user message to embed');
+        }
 
-    const { embedding } = await embed({
-        model: openai.embedding('text-embedding-3-small'),
-        value: lastUserMessage,
-    });
+        const { embedding } = await embed({
+            model: openai.embedding('text-embedding-3-small'),
+            value: lastUserMessage,
+        });
 
-    const queryEmbedding = embedding;
+        const queryEmbedding = embedding;
 
-    const results = await qdrant.search('documents', {
-        vector: queryEmbedding,
-        limit: 20,
-        with_payload: true
-    });
+        const results = await qdrant.search('documents', {
+            vector: queryEmbedding,
+            limit: 20,
+            with_payload: true
+        });
 
-    // Format context from payloads, based on the meta information stored in the collection
-    const context = results
-        .map((r) => {
-            const p = r.payload as any;
-            return `[Source: ${p.source} | Report date: ${p.report_date} | Page ${p.page} | Source url: ${p.source_url}]\n${p.content}`;
-        })
-        .join('\n\n');
+        // Format context from payloads, based on the meta information stored in the collection
+        const context = results
+            .map((r) => {
+                const p = r.payload as any;
+                return `[Source: ${p.source} | Report date: ${p.report_date} | Page ${p.page} | Source url: ${p.source_url}]\n${p.content}`;
+            })
+            .join('\n\n');
 
-    const result = streamText({
-        model: openai('gpt-4o'),
-        onError: (error) => {
-            console.error("Error in AI response:", error)
-        },
-        abortSignal: req.signal,
-        tools,
-        prompt: `
+        const result = streamText({
+            model: openai('gpt-4o'),
+            onError: (error) => {
+                console.error("Error in AI response:", error)
+            },
+            abortSignal: req.signal,
+            tools,
+            prompt: `
             Based on the following question, please select the most relevant segments from the provided text, and extract the corresponding data (e.g., price trends, average house prices, sales volume, etc.) in the following format:
 
             A brief summary
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
             Question:
             ${lastUserMessage}
         `,
-        system: `
+            system: `
                 You are a real estate data analysis assistant.
 
                 You will be provided with user questions and supporting text segments that contain housing market data (e.g., prices, trends, volume). Your goal is to:
@@ -96,7 +97,11 @@ export async function POST(req: NextRequest) {
 
                 If the user asks something unrelated to real estate or data (e.g., greetings or jokes), respond politely and briefly, and do not generate or reference any chart or data.
         `
-    });
+        });
 
-    return result.toDataStreamResponse();
+        return result.toDataStreamResponse();
+    } catch (e) {
+        console.log(e);
+        return new Response(null, { status: 500, statusText: 'Failed to get AI response' })
+    }
 }

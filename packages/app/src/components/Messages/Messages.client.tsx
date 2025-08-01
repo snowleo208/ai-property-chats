@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-import { Box, Callout, Card, Flex, IconButton, Spinner, Text } from "@radix-ui/themes";
+import { Box, Callout, Card, Flex, IconButton, Spinner, Text, VisuallyHidden } from "@radix-ui/themes";
 import { ToolInvocation, UIMessage } from "ai"
 import { MarkdownComponent } from "../MarkdownComponent/MarkdownComponent.client";
 import { WelcomeScreen } from '../WelcomeScreen/WelcomeScreen';
@@ -21,7 +21,7 @@ export type MessagesProps = {
     status: "submitted" | "streaming" | "ready" | "error";
 }
 
-export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesProps) => {
+export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: MessagesProps) => {
     const [isAtBottom, setIsAtBottom] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -103,15 +103,23 @@ export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesP
                     <Flex direction="column" gap="2" data-testid="completion" width="100%">
                         {messages.map((message, index) => (
                             (<Flex direction="column" gap="2" className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} key={index} p="3">
-                                <MarkdownComponent content={`${message.content}`} key={`${message}_${index}`} />
+                                {message.parts?.map(item => {
+                                    if (item.type === 'tool-invocation') {
+                                        return generateTools(item.toolInvocation)
+                                    }
 
-                                <>
-                                    {message.toolInvocations?.map(generateTools)}
-                                </>
+                                    if (item.type === 'text') {
+                                        return (<MarkdownComponent content={`${message.content}`} key={`${message}_${index}`} />)
+                                    }
+                                })}
                             </Flex>)
                         ))}
                     </Flex>
                 )}
+
+                {status === 'submitted' && <div>
+                    <Spinner />
+                    <VisuallyHidden>Loading...</VisuallyHidden></div>}
 
                 <div ref={bottomRef} />
             </Flex>
@@ -120,8 +128,13 @@ export const Messages = ({ onDefaultQuestionsClick, error, messages }: MessagesP
                 {error && (
                     <Box pt="2">
                         <Callout.Root variant="surface" size="1" color="red">
+                            <Callout.Icon>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5" />
+                                </svg>
+                            </Callout.Icon>
                             <Callout.Text>
-                                Sorry, something went wrong, please try again.
+                                Something went wrong. Please try again.
                             </Callout.Text>
                         </Callout.Root>
                     </Box>
