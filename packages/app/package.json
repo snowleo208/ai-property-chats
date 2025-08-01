@@ -42,7 +42,7 @@
     "@ai-sdk/react": "1.2.12",
     "react-markdown": "10.1.0",
     "remark-gfm": "4.0.1",
-    "echarts": "5.0.0",
+    "echarts": "5.6.0",
     "echarts-for-react": "3.0.2",
     "next": "15.4.5"
   }
