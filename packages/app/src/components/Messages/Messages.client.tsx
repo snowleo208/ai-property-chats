@@ -106,12 +106,10 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
 
                                     if (part.type === 'tool-getAvailableRegions') {
                                         switch (part.state) {
-                                            case 'output-available':
-                                                return null;
                                             case 'output-error':
                                                 return <ErrorState key={`tool-getAvailableRegions_${part.toolCallId}_${partIndex}`} />;
                                             default:
-                                                return <LoadingState key={`tool-getAvailableRegions_${part.toolCallId}_${partIndex}`} />;
+                                                return null;
                                         }
                                     }
 

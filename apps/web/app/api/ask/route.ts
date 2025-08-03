@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         const items = convertToModelMessages(messages)
         const lastUserMessage = items
             .filter((m) => m.role === 'user')
-            .at(-1)?.content?.[0]?.text;
+            .at(-1)?.content?.[0];
 
         const { embedding } = await embed({
             model: openai.embedding('text-embedding-3-small'),
@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
             messages: convertToModelMessages(messages),
             prepareStep: async ({ messages }) => {
                 // Compress conversation history for longer loops
-                console.log(JSON.stringify(messages))
                 if (messages.length > 20) {
                     return {
                         messages: messages.slice(-10),
