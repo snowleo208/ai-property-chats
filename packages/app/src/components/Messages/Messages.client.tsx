@@ -73,15 +73,15 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
     const renderFunction = (part: UIMessagePart<UIDataTypes, UITools>, partIndex: number,) => {
 
         if (part.type === 'tool-getAvailableRegionsForRental') {
-            return <ToolStatus state={part.state} toolName='getAvailableRegions' toolId={part.toolCallId} loadingText='Checking which regions are available for rental data...' completeText='Found available regions for rental data' />
+            return <ToolStatus state={part.state} toolName='getAvailableRegions' toolId={part.toolCallId} loadingText='Checking which regions are available for rental data...' completeText='Found available regions for rental data' key={`getAvailableRegions_${part.toolCallId}`} content={part.output} />
         }
 
         if (part.type === 'tool-getAvailableRegionsForSale') {
-            return <ToolStatus state={part.state} toolName='getAvailableRegionsForSale' toolId={part.toolCallId} loadingText="Checking which regions are available for sale data..." completeText='Found available regions for house price data' />
+            return <ToolStatus state={part.state} toolName='getAvailableRegionsForSale' toolId={part.toolCallId} loadingText="Checking which regions are available for sale data..." completeText='Found available regions for house price data' key={`getAvailableRegionsForSale_${part.toolCallId}`} content={part.output} />
         }
 
         if (part.type === 'tool-findAffordableRegions') {
-            return <ToolStatus state={part.state} toolName='findAffordableRegions' toolId={part.toolCallId} loadingText='Looking up affordable regions' completeText="Available regions retrieved" content={part.output} />
+            return <ToolStatus state={part.state} toolName='findAffordableRegions' toolId={part.toolCallId} loadingText='Looking up affordable regions' completeText="Available regions retrieved" content={part.output} key={`findAffordableRegions_${part.toolCallId}`} />
         }
 
         if (part.type === 'tool-getRentPrices') {
