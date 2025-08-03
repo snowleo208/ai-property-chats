@@ -22,7 +22,7 @@ export default function RootLayout({
       <body>
         <main>
           <Theme
-            accentColor="violet"
+            accentColor="indigo"
             grayColor="mauve"
             radius="large"
             scaling="100%"

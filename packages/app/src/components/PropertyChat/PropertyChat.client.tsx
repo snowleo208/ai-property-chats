@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-
+import { DefaultChatTransport } from "ai";
 import { useChat } from '@ai-sdk/react';
+
 import { PromptTextArea } from "../PromptTextArea/PromptTextArea.client";
 import Messages from "../Messages/Messages.client";
 import { Header } from "../Header/Header";
-import { DefaultChatTransport } from "ai";
 
 export const PropertyChat = () => {
   const [currentInputValue, setCurrentInputValue] = useState('');
