@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import { Box, Callout, Card, Flex, IconButton, Spinner, Text, VisuallyHidden } from "@radix-ui/themes";
-import { UIMessage } from "ai"
+import { UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai"
 import { MarkdownComponent } from "../MarkdownComponent/MarkdownComponent.client";
 import { WelcomeScreen } from '../WelcomeScreen/WelcomeScreen';
 import styles from './Messages.module.css';
@@ -35,7 +35,8 @@ const ErrorState = ({ key = 'general-error-state' }: { key?: string }) => {
             <Callout.Root variant="surface" size="1" color="red">
                 <Callout.Icon>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5" />
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
                     </svg>
                 </Callout.Icon>
                 <Callout.Text>
@@ -45,6 +46,33 @@ const ErrorState = ({ key = 'general-error-state' }: { key?: string }) => {
         </Box>
     )
 }
+
+const ToolStatus = ({ state, toolName, toolId, loadingText, completeText, content }: {
+    state: string;
+    toolName: string;
+    toolId: string;
+    loadingText: string;
+    completeText: string;
+    content?: unknown;
+}) => {
+    switch (state) {
+        case 'output-available':
+            return <div key={`getRentPrices_${toolId}`}>
+                <details>
+                    <summary>
+                        {completeText}
+                    </summary>
+                    <code>{JSON.stringify(content)}</code>
+                </details>
+
+            </div>
+
+        case 'output-error':
+            return <div key={`${toolName}_${toolId}`}>Error: failed to get data, please try again.</div>;
+        default:
+            return <div key={`${toolName}_${toolId}`}>{loadingText}</div>
+    }
+};
 
 export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: MessagesProps) => {
     const [isAtBottom, setIsAtBottom] = useState(true);
@@ -75,7 +103,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                 const max = resultsGrid.scrollHeight - resultsGrid.clientHeight;
 
                 requestAnimationFrame(() => {
-                    const nearBottom = max - top < (resultsGrid.scrollHeight * 0.1);
+                    const nearBottom = max - top < (resultsGrid.scrollHeight * 0.3);
                     setIsAtBottom(nearBottom);
                 });
 
@@ -89,11 +117,99 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
         };
     }, []);
 
-    // console.log({ messages })
+    console.log({ messages })
+
+    // TODO: split it better
+    const renderFunction = (part: UIMessagePart<UIDataTypes, UITools>, partIndex: number,) => {
+
+        if (part.type === 'tool-getAvailableRegionsForRental') {
+            return <ToolStatus state={part.state} toolName='getAvailableRegions' toolId={part.toolCallId} loadingText='Checking which regions are available for rental data...' completeText='Found available regions for rental data' />
+        }
+
+        if (part.type === 'tool-getAvailableRegionsForSale') {
+            return <ToolStatus state={part.state} toolName='getAvailableRegionsForSale' toolId={part.toolCallId} loadingText="Checking which regions are available for sale data..." completeText='Found available regions for house price data' />
+        }
+
+        if (part.type === 'tool-findAffordableRegions') {
+            return <ToolStatus state={part.state} toolName='findAffordableRegions' toolId={part.toolCallId} loadingText='Looking up affordable regions' completeText="Available regions retrieved" content={part.output} />
+        }
+
+        if (part.type === 'tool-getRentPrices') {
+            switch (part.state) {
+                case 'output-available':
+                    return <div key={`getRentPrices_${part.toolCallId}`}>
+                        <details>
+                            <summary>
+                                Found rental data
+                            </summary>
+                            <code>{JSON.stringify(part.output)}</code>
+                        </details>
+
+                    </div>
+
+                case 'output-error':
+                    return <div key={`getRentPrices${part.toolCallId}`}>Error: failed to get rental data, please retry.</div>;
+                default:
+                    return <div key={`getRentPrices${part.toolCallId}`}>Checking rental data...</div>
+            }
+        }
+
+        if (part.type === 'tool-getHousePrices') {
+            switch (part.state) {
+                case 'output-available':
+                    return <div key={`getHousePrices_${part.toolCallId}`}>
+                        <details>
+                            <summary>
+                                Found house price data
+                            </summary>
+                            <code>{JSON.stringify(part.output)}</code>
+                        </details>
+
+                    </div>
+
+                case 'output-error':
+                    return <div key={`getHousePrices_${part.toolCallId}`}>Error: failed to get house prices data, please retry.</div>;
+                default:
+                    return <div key={`getHousePrices_${part.toolCallId}`}>Checking house price data...</div>
+            }
+        }
+
+        if (part.type === 'tool-generateChart') {
+            switch (part.state) {
+                case 'input-available':
+                case 'input-streaming':
+                    return <div key={`${part.toolCallId}_${partIndex}_loading`}>
+                        <Box my="2" maxWidth="90%">
+                            <Card>
+                                <Flex minHeight="400px" gap="3" align="start">
+                                    <Spinner size="3" /> <Text as="p">Loading charts...</Text>
+                                </Flex>
+                            </Card>
+                        </Box>
+                    </div>;
+                case 'output-available':
+                    return (
+                        <div key={`chart-${part.toolCallId}_${partIndex}`}>
+                            <div data-testid={`chart-${part.toolCallId}_${partIndex}`} key={part.toolCallId}>
+                                <DynamicCharts data={part.output} />
+                            </div>
+                        </div>
+                    );
+                case 'output-error':
+                    return <div key={`generateChart_${part.toolCallId}`}>Error: {part.errorText}</div>;
+                default:
+                    return null;
+            }
+        }
+
+        if (part.type === 'text') {
+            return (<MarkdownComponent content={`${part.text}`} key={`${part.text}_${partIndex}`} />)
+        }
+    };
 
     return (
         <Box className={styles.messages} data-testid="scroll-area" ref={scrollRef}>
-            <Flex direction="column" width="100%" gap="2">
+            <Flex direction="column" width="100%" gap="3">
                 {messages.length === 0 &&
                     <WelcomeScreen onDefaultQuestionsClick={onDefaultQuestionsClick} />
                 }
@@ -101,70 +217,8 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                 {messages && (
                     <Flex direction="column" gap="2" data-testid="completion" width="100%">
                         {messages.map((message, index) => (
-                            (<Flex direction="column" gap="2" className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} key={index} p="3">
-                                {message.parts?.map((part, partIndex) => {
-
-                                    if (part.type === 'tool-getAvailableRegions') {
-                                        switch (part.state) {
-                                            case 'output-error':
-                                                return <ErrorState key={`tool-getAvailableRegions_${part.toolCallId}_${partIndex}`} />;
-                                            default:
-                                                return null;
-                                        }
-                                    }
-
-                                    if (part.type === 'tool-getHousePrices') {
-                                        switch (part.state) {
-                                            case 'output-available':
-                                                return <div key={`getHousePrices_${part.toolCallId}`}>
-                                                    <details>
-                                                        <summary>
-                                                            Finished getting house prices data
-                                                        </summary>
-                                                        <code>{JSON.stringify(part.output)}</code>
-                                                    </details>
-
-                                                </div>
-
-                                            case 'output-error':
-                                                return <div key={`getHousePrices_${part.toolCallId}`}>Error: failed to get house prices, please retry.</div>;
-                                            default:
-                                                return <div key={`getHousePrices_${part.toolCallId}`}>Getting house prices data...</div>
-                                        }
-                                    }
-
-                                    if (part.type === 'tool-generateChart') {
-                                        switch (part.state) {
-                                            case 'input-available':
-                                            case 'input-streaming':
-                                                return <div key={`${part.toolCallId}_${index}_loading`}>
-                                                    <Box my="2" maxWidth="90%">
-                                                        <Card>
-                                                            <Flex minHeight="400px" gap="3" align="start">
-                                                                <Spinner size="3" /> <Text as="p">Loading charts...</Text>
-                                                            </Flex>
-                                                        </Card>
-                                                    </Box>
-                                                </div>;
-                                            case 'output-available':
-                                                return (
-                                                    <div key={`chart-${part.toolCallId}_${index}`}>
-                                                        <div data-testid={`chart-${part.toolCallId}_${index}`} key={part.toolCallId}>
-                                                            <DynamicCharts data={part.output} />
-                                                        </div>
-                                                    </div>
-                                                );
-                                            case 'output-error':
-                                                return <div key={`generateChart_${part.toolCallId}`}>Error: {part.errorText}</div>;
-                                            default:
-                                                return null;
-                                        }
-                                    }
-
-                                    if (part.type === 'text') {
-                                        return (<MarkdownComponent content={`${part.text}`} key={`${part.text}_${index}`} />)
-                                    }
-                                })}
+                            (<Flex direction="column" gap="5" className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} key={index} p="3">
+                                {message.parts?.map(renderFunction)}
                             </Flex>)
                         ))}
                     </Flex>
@@ -181,7 +235,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                 )}
             </div>
 
-            {!isAtBottom && <Box className={styles.bottomButton}>
+            {!isAtBottom && messages.length > 0 && <Box className={styles.bottomButton}>
                 <IconButton onClick={onBottomButtonClick} variant="surface" color="gray" radius='full'>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path fillRule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1" />

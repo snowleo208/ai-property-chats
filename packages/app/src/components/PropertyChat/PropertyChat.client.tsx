@@ -13,7 +13,8 @@ export const PropertyChat = () => {
   const { setMessages, messages, sendMessage, stop, error, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/ask',
-    })
+    }),
+    experimental_throttle: 100
   });
 
   const onStop = (e: React.FormEvent<HTMLButtonElement>) => {

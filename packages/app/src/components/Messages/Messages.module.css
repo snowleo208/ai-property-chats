@@ -14,7 +14,7 @@
 }
 
 .assistantMessage {
-    min-height: 400px;
+    height: auto;
 }
 
 .bottomButton {

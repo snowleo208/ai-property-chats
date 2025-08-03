@@ -1,6 +1,7 @@
 import { Em, Heading, Link, Separator, Strong, Text } from '@radix-ui/themes';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import styles from './MarkdownComponent.module.css';
 
 type MarkdownComponentProps = {
     content: unknown
@@ -64,9 +65,9 @@ export const MarkdownComponent = ({ content }: MarkdownComponentProps) => {
                 a: ({ children, href }) => (
                     <Link underline="always" target="_blank" referrerPolicy="no-referrer" href={href}>{children}</Link>),
                 ol: ({ children }) => (
-                    <ol>{children}</ol>),
+                    <ol className={styles.list}>{children}</ol>),
                 ul: ({ children }) => (
-                    <ul>{children}</ul>),
+                    <ul className={styles.list}>{children}</ul>),
                 li: ({ children }) => (
                     <li>{children}</li>),
                 hr: () => (

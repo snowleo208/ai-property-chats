@@ -6,9 +6,11 @@ type WelcomeScreenProps = {
 
 const QUESTION_SET = [
     "What’s the average house price in the UK in 2025?",
-    "What are the housing trends in London?",
-    "Show me a chart of average prices over the past 6 months",
-    "Is the market more active now compared to last year?"
+    "Is it better to rent or buy in London right now?",
+    "Did rent prices go up faster than house prices in the last year?",
+    "Show me a chart of average prices over the past 6 months in the UK",
+    "Is the market in Manchester more active now compared to last year?",
+    "Where can I buy a flat for under £250,000?"
 ]
 
 export const WelcomeScreen = ({ onDefaultQuestionsClick }: WelcomeScreenProps) => {
