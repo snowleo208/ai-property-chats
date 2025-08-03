@@ -19,6 +19,8 @@
 
 .bottomButton {
     position: fixed;
-    bottom: 15vh;
+    display: flex;
+    justify-content: center;
+    bottom: 20%;
     left: 50%;
 }

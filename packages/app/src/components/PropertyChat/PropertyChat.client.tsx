@@ -6,12 +6,14 @@ import { useChat } from '@ai-sdk/react';
 import { PromptTextArea } from "../PromptTextArea/PromptTextArea.client";
 import Messages from "../Messages/Messages.client";
 import { Header } from "../Header/Header";
+import { DefaultChatTransport } from "ai";
 
 export const PropertyChat = () => {
   const [currentInputValue, setCurrentInputValue] = useState('');
-  const { setMessages, messages, append, stop, error, status } = useChat({
-    api: '/api/ask',
-    experimental_throttle: 100
+  const { setMessages, messages, sendMessage, stop, error, status } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/ask',
+    })
   });
 
   const onStop = (e: React.FormEvent<HTMLButtonElement>) => {
@@ -20,9 +22,8 @@ export const PropertyChat = () => {
   }
 
   const onDefaultQuestionsClick = (value: string) => {
-    append({
-      role: 'user',
-      content: value,
+    sendMessage({
+      text: value,
     })
   }
 
@@ -39,9 +40,8 @@ export const PropertyChat = () => {
       return;
     }
 
-    append({
-      role: 'user',
-      content: currentInputValue,
+    sendMessage({
+      text: currentInputValue,
     })
 
     setCurrentInputValue('');

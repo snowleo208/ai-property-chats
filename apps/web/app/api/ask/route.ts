@@ -1,38 +1,36 @@
 import { openai } from '@ai-sdk/openai';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { NextRequest } from 'next/server';
-import { streamText, embed } from 'ai';
+import { streamText, embed, convertToModelMessages, stepCountIs } from 'ai';
 import { tools } from './tools';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-const qdrant = new QdrantClient({
-    url: process.env.QDRANT_URL!,
-    apiKey: process.env.QDRANT_API_KEY!
-});
-
 export async function POST(req: NextRequest) {
     try {
         const { messages } = await req.json();
 
-        // TODO: do type validation on incoming messages
-        const lastUserMessage = messages.filter((m: { role: string }) => m.role === 'user').at(-1)?.content;
-
-        if (!lastUserMessage) {
-            throw new Error('No user message to embed');
-        }
+        const items = convertToModelMessages(messages)
+        const lastUserMessage = items
+            .filter((m) => m.role === 'user')
+            .at(-1)?.content?.[0]?.text;
 
         const { embedding } = await embed({
             model: openai.embedding('text-embedding-3-small'),
-            value: lastUserMessage,
+            value: lastUserMessage?.toString(),
         });
 
         const queryEmbedding = embedding;
 
+        const qdrant = new QdrantClient({
+            url: process.env.QDRANT_URL!,
+            apiKey: process.env.QDRANT_API_KEY!
+        });
+
         const results = await qdrant.search('documents', {
             vector: queryEmbedding,
-            limit: 20,
+            limit: 15,
             with_payload: true
         });
 
@@ -51,55 +49,56 @@ export async function POST(req: NextRequest) {
             },
             abortSignal: req.signal,
             tools,
-            prompt: `
-            Based on the following question, please select the most relevant segments from the provided text, and extract the corresponding data (e.g., price trends, average house prices, sales volume, etc.) in the following format:
+            stopWhen: stepCountIs(3),
+            messages: convertToModelMessages(messages),
+            prepareStep: async ({ messages }) => {
+                // Compress conversation history for longer loops
+                console.log(JSON.stringify(messages))
+                if (messages.length > 20) {
+                    return {
+                        messages: messages.slice(-10),
+                    };
+                }
 
-            A brief summary
-
-            Include the source page number and source link for each data point
-
-            Provided segments:
-            ${context}
-
-            Question:
-            ${lastUserMessage}
-        `,
+                return {};
+            },
             system: `
-                You are a real estate data analysis assistant.
+                You are a data assistant helping users explore average house prices in the UK.
 
-                You will be provided with user questions and supporting text segments that contain housing market data (e.g., prices, trends, volume). Your goal is to:
+                Before calling tools, you must explain your next steps briefly.
+                
+                You have access to four tools:
 
-                1. Answer the user's question based on the data.
-                2. If the user asks for a chart or graph, use the generateChart tool.
+                1. getAvailableRegions – returns the list of valid region names in the database.
+                2. getHousePrices – retrieves the average house price for a given array of years, months and regions. The latest data in the database is May 2025.
+                3. generateChart – creates a visual chart from the returned house price data.
 
-                Only use the tool if the user asks for a visual representation.
+                Rules:
+                - If the user refers to “UK” or “United Kingdom”, treat the region as "United Kingdom".
+                - If the user asks about a region, but does not provide an exact valid region name, first call getAvailableRegions, find the closest matching region, and then call getHousePrices with that name.
+                - Do not skip calling getHousePrices if the user asks for prices, trends, comparisons, or data over time — even if a region is already known.
+                - After calling getHousePrices, **you must continue with a short natural-language explanation** by calling getTrendData. Do not stop the response after getHousePrices.
+                - Use generateChart only after retrieving data with getHousePrices if a visual is needed.
 
-                If you use the generateChart tool to create a chart, you must also include a short explanation in natural language before or after the chart, describing the key insights (e.g., trends, comparisons).
+                Also cite the source for each data point using the following format:
+                [Private rent and house prices, UK: Mar 2024, Page X](source_url)
 
-                For example:
-
-                "The chart below shows a steady increase in average house prices from January to March 2025. London consistently had higher prices compared to Manchester."
-
-                Then call the generateChart tool. When calling the generateChart tool, use the following format:
+                When calling the generateChart tool, use the following format:
 
                 - title: A short title for the chart (e.g., "Average House Prices 2024")
                 - type: Either "line" or "bar", based on what best suits the data
-                - xAxis: A list of string labels (e.g., months, regions)
+                - xAxis: A list of string labels (e.g., months, regions). Format dates for xAxis as plain strings like Jan 2025
                 - series: An array of one or more data series objects:
                 - type: Same as the chart type ("bar" or "line")
                 - name: The label for this series (e.g., "London")
                 - data: A list of numbers matching the xAxis order
 
-                Do not use any other format (like yAxis, dataset, or seriesName). Only use the fields defined above.
-
-                Also cite the source for each data point using the following format:
-                [Page X, Report Title](source_url)
-
-                If the user asks something unrelated to real estate or data (e.g., greetings or jokes), respond politely and briefly, and do not generate or reference any chart or data.
+                Provided data from House Prices Index report:
+                ${context}
         `
         });
 
-        return result.toDataStreamResponse();
+        return result.toUIMessageStreamResponse();
     } catch (e) {
         console.log(e);
         return new Response(null, { status: 500, statusText: 'Failed to get AI response' })

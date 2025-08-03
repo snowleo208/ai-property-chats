@@ -3,10 +3,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 type MarkdownComponentProps = {
-    content: string
+    content: unknown
 };
 
 export const MarkdownComponent = ({ content }: MarkdownComponentProps) => {
+
+    if (typeof content !== 'string') {
+        return null;
+    }
 
     return (
         <ReactMarkdown
@@ -67,6 +71,10 @@ export const MarkdownComponent = ({ content }: MarkdownComponentProps) => {
                     <li>{children}</li>),
                 hr: () => (
                     <Separator my="3" size="4" />
+                ),
+                // TODO: add in prompt for no ONS image
+                img: () => (
+                    null
                 )
             }}
             children={content}
