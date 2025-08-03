@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-import { Box, Callout, Card, Flex, IconButton, Spinner, Text, VisuallyHidden } from "@radix-ui/themes";
+import { Box, Card, Flex, IconButton, Spinner, Text } from "@radix-ui/themes";
 import { UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai"
 import { MarkdownComponent } from "../MarkdownComponent/MarkdownComponent.client";
 import { WelcomeScreen } from '../WelcomeScreen/WelcomeScreen';
 import styles from './Messages.module.css';
+import { ToolStatus } from '../ToolStatus/ToolStatus.client';
+import { LoadingState } from './LoadingState/LoadingState';
+import { ErrorState } from './ErrorState/ErrorState';
 
 const DynamicCharts = dynamic(() => import('../Charts/Charts.client'), {
     ssr: false
@@ -20,59 +23,6 @@ export type MessagesProps = {
     onDefaultQuestionsClick: (question: string) => void;
     status: "submitted" | "streaming" | "ready" | "error";
 }
-
-const LoadingState = ({ key = 'general-loading-state' }: { key?: string }) => {
-    return (
-        <div key={key}>
-            <Spinner />
-            <VisuallyHidden>Loading...</VisuallyHidden></div>
-    )
-};
-
-const ErrorState = ({ key = 'general-error-state' }: { key?: string }) => {
-    return (
-        <Box pt="2" key={key}>
-            <Callout.Root variant="surface" size="1" color="red">
-                <Callout.Icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
-                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z" />
-                    </svg>
-                </Callout.Icon>
-                <Callout.Text>
-                    Something went wrong. Please try again.
-                </Callout.Text>
-            </Callout.Root>
-        </Box>
-    )
-}
-
-const ToolStatus = ({ state, toolName, toolId, loadingText, completeText, content }: {
-    state: string;
-    toolName: string;
-    toolId: string;
-    loadingText: string;
-    completeText: string;
-    content?: unknown;
-}) => {
-    switch (state) {
-        case 'output-available':
-            return <div key={`getRentPrices_${toolId}`}>
-                <details>
-                    <summary>
-                        {completeText}
-                    </summary>
-                    <code>{JSON.stringify(content)}</code>
-                </details>
-
-            </div>
-
-        case 'output-error':
-            return <div key={`${toolName}_${toolId}`}>Error: failed to get data, please try again.</div>;
-        default:
-            return <div key={`${toolName}_${toolId}`}>{loadingText}</div>
-    }
-};
 
 export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: MessagesProps) => {
     const [isAtBottom, setIsAtBottom] = useState(true);
@@ -117,7 +67,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
         };
     }, []);
 
-    console.log({ messages })
+    // console.log({ messages })
 
     // TODO: split it better
     const renderFunction = (part: UIMessagePart<UIDataTypes, UITools>, partIndex: number,) => {
@@ -217,7 +167,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                 {messages && (
                     <Flex direction="column" gap="2" data-testid="completion" width="100%">
                         {messages.map((message, index) => (
-                            (<Flex direction="column" gap="5" className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} key={index} p="3">
+                            (<Flex direction="column" gap="5" className={message.role === 'user' ? styles.userMessage : styles.assistantMessage} key={`${message.role}_${index}`} p="3">
                                 {message.parts?.map(renderFunction)}
                             </Flex>)
                         ))}
