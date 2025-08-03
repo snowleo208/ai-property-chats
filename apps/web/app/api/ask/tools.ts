@@ -40,7 +40,7 @@ export const getAvailableRegionsForRental = createTool({
             FROM rental_prices 
             ORDER BY area_name;
         `;
-        const regionNames = result.map((row) => row.region_name);
+        const regionNames = result.map((row) => row.area_name);
         return { region_names: regionNames };
     }
 });

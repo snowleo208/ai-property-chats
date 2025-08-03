@@ -90,7 +90,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                     return <div key={`getRentPrices_${part.toolCallId}`}>
                         <details>
                             <summary>
-                                Found rental data
+                                Retrieved rental data
                             </summary>
                             <code>{JSON.stringify(part.output)}</code>
                         </details>
@@ -110,7 +110,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                     return <div key={`getHousePrices_${part.toolCallId}`}>
                         <details>
                             <summary>
-                                Found house price data
+                                Retrieved house price data
                             </summary>
                             <code>{JSON.stringify(part.output)}</code>
                         </details>
@@ -118,7 +118,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                     </div>
 
                 case 'output-error':
-                    return <div key={`getHousePrices_${part.toolCallId}`}>Error: failed to get house prices data, please retry.</div>;
+                    return <div key={`getHousePrices_${part.toolCallId}`}>Error: failed to get house prices data, please try again.</div>;
                 default:
                     return <div key={`getHousePrices_${part.toolCallId}`}>Checking house price data...</div>
             }

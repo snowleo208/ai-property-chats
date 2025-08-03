@@ -6,10 +6,10 @@ type WelcomeScreenProps = {
 }
 
 const QUESTION_SET = [
-    "What’s the average house price in the UK in 2025?",
+    "What’s the average house prices across the UK over the last 6 months?",
     "Is it better to rent or buy in London right now?",
     "Is the market in Manchester more active now compared to last year?",
-    "Show me a chart of average prices over the past 6 months in the UK",
+    "Show me a chart of average prices over the past 10 years in the UK",
     "Where can I buy a flat for under £250,000?"
 ]
 
