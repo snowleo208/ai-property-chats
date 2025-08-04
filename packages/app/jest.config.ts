@@ -10,6 +10,7 @@ export default {
   "moduleNameMapper": {
     '^ai/rsc$': '<rootDir>/node_modules/ai/rsc/dist',
     "react-markdown": "<rootDir>/ReactMarkdownMock.tsx",
+    "\\.(css|jpg|png)$": "<rootDir>/mock-file.ts",
   },
   setupFilesAfterEnv: ["<rootDir>/jest-setup-after.ts"],
 } satisfies Config;

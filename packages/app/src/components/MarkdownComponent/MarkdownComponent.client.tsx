@@ -1,6 +1,6 @@
 import { Em, Heading, Link, Separator, Strong, Text } from '@radix-ui/themes';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+// import remarkGfm from 'remark-gfm';
 import styles from './MarkdownComponent.module.css';
 
 type MarkdownComponentProps = {
@@ -8,14 +8,13 @@ type MarkdownComponentProps = {
 };
 
 export const MarkdownComponent = ({ content }: MarkdownComponentProps) => {
-
     if (typeof content !== 'string') {
         return null;
     }
 
     return (
         <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            // remarkPlugins={[remarkGfm]}
             components={{
                 h1: ({ children }) => (
                     <Heading as="h1">

@@ -6,15 +6,13 @@ import { setupServer } from "msw/node";
 import { renderWithProviders } from "../../utils/renderWithProviders";
 
 global.HTMLElement.prototype.scrollIntoView = jest.fn();
-global.HTMLElement.prototype.releasePointerCapture = jest.fn();
-global.HTMLElement.prototype.hasPointerCapture = jest.fn();
 
 const server = setupServer(
   http.post("/api/ask", async () => {
     // https://ai-sdk.dev/docs/ai-sdk-core/testing#simulate-data-stream-protocol-responses
     const stream = simulateReadableStream({
-      initialDelayInMs: 100, // Delay before the first chunk
-      chunkDelayInMs: 50, // Delay between chunks
+      initialDelayInMs: 100,
+      chunkDelayInMs: 50,
       chunks: [
         `data: {"type":"start","messageId":"msg-123"}\n\n`,
         `data: {"type":"text-start","id":"text-1"}\n\n`,
@@ -116,8 +114,6 @@ describe("PropertyChat", () => {
       name: "What’s the average house prices across the UK over the last 6 months?",
     });
     await user.click(defaultQuestions);
-
-    await user.click(sendButton);
 
     expect(await screen.findByText("Loading...")).toBeInTheDocument();
 

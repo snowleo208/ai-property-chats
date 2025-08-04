@@ -1,12 +1,9 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { PromptTextArea, PromptTextAreaProps } from "./PromptTextArea.client";
 import { renderWithProviders } from "../../utils/renderWithProviders";
 
-global.HTMLElement.prototype.scrollIntoView = jest.fn();
-global.HTMLElement.prototype.releasePointerCapture = jest.fn();
-global.HTMLElement.prototype.hasPointerCapture = jest.fn();
-
 const defaultProps: PromptTextAreaProps = {
+    inputValue: '',
     isLoading: false,
     onStop: jest.fn(),
     onSubmit: jest.fn(),
@@ -16,6 +13,7 @@ const defaultProps: PromptTextAreaProps = {
 const renderComponent = (props: PromptTextAreaProps = defaultProps) => {
     return renderWithProviders(
         <PromptTextArea
+            inputValue={props.inputValue}
             isLoading={props.isLoading}
             onStop={props.onStop}
             onSubmit={props.onSubmit}
@@ -32,27 +30,23 @@ describe("PromptTextArea", () => {
     it("renders correctly", () => {
         renderComponent();
 
-        const genreSelect = screen.getByRole("combobox", { name: 'Select genre' });
-        expect(genreSelect).toBeInTheDocument();
-
-        const lengthSelect = screen.getByRole("combobox", { name: 'Select length' });
-        expect(lengthSelect).toBeInTheDocument();
-
-        const askButton = screen.getByRole("button", { name: "Ask" });
-        expect(askButton).toBeInTheDocument();
-        expect(askButton).not.toBeDisabled();
-
-        const stopButton = screen.queryByRole("button", { name: "Stop" });
-        expect(stopButton).toBeInTheDocument();
-        expect(stopButton).toBeDisabled();
+        const sendButton = screen.getByRole("button", { name: "Send message" });
+        expect(sendButton).toBeInTheDocument();
+        expect(sendButton).toBeDisabled();
     });
 
     it("calls onSubmit when form is submitted", async () => {
-        const { user } = renderComponent();
+        const { user } = renderComponent({
+            ...defaultProps,
+            inputValue: "Test message",
+        });
 
-        const askButton = screen.getByRole("button", { name: "Ask" });
-        expect(askButton).toBeInTheDocument();
-        await user.click(askButton);
+        const sendButton = screen.getByRole("button", { name: "Send message" });
+
+        await waitFor(() => {
+            expect(sendButton).toBeEnabled();
+        });
+        await user.click(sendButton);
 
         expect(defaultProps.onSubmit).toHaveBeenCalled();
     });
@@ -64,9 +58,6 @@ describe("PromptTextArea", () => {
             isLoading: true,
             onStop: mockStop,
         });
-
-        const askButton = screen.getByRole("button", { name: "Ask" });
-        expect(askButton).toBeDisabled();
 
         const stopButton = screen.getByRole("button", { name: "Stop" });
         expect(stopButton).toBeInTheDocument();
