@@ -11,6 +11,7 @@ import styles from './Messages.module.css';
 import { ToolStatus } from '../ToolStatus/ToolStatus.client';
 import { LoadingState } from './LoadingState/LoadingState';
 import { ErrorState } from './ErrorState/ErrorState';
+import { chartSchema } from './Message.types';
 
 const DynamicCharts = dynamic(() => import('../Charts/Charts.client'), {
     ssr: false
@@ -128,13 +129,16 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                         </Box>
                     </div>;
                 case 'output-available':
-                    return (
-                        <div key={`chart-${part.toolCallId}_${partIndex}`}>
-                            <div data-testid={`chart-${part.toolCallId}_${partIndex}`} key={part.toolCallId}>
-                                <DynamicCharts data={part.output} />
+                    const result = chartSchema.safeParse(part.output);
+                    if (result.success) {
+                        return (
+                            <div key={`chart-${part.toolCallId}_${partIndex}`}>
+                                <div data-testid={`chart-${part.toolCallId}_${partIndex}`} key={part.toolCallId}>
+                                    <DynamicCharts data={result.data} />
+                                </div>
                             </div>
-                        </div>
-                    );
+                        );
+                    }
                 case 'output-error':
                     return <div key={`generateChart_${part.toolCallId}`}>Error: {part.errorText}</div>;
                 default:

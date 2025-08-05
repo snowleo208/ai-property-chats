@@ -2,9 +2,9 @@
 
 import { Box, Card } from '@radix-ui/themes';
 import ReactECharts from 'echarts-for-react';
+import { Chart } from '../Messages/Message.types';
 
-// TODO: fix types
-export const Charts = ({ data: { title, xAxis, series } }: { data: Record<string, any> }) => {
+export const Charts = ({ data: { title, xAxis, series } }: { data: Chart }) => {
     return (
         <Box my="2" maxWidth="90%">
             <Card>
