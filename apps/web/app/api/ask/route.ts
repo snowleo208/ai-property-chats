@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         const result = streamText({
             model: openai('gpt-4o'),
             onError: (error) => {
-                console.error("Error in AI response:", error)
+                console.log("Error in AI response:", error)
             },
             abortSignal: req.signal,
             tools,

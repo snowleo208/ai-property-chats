@@ -136,24 +136,34 @@ export const matchRegionForRental = createTool({
 });
 
 export const getHousePricesByPostcode = createTool({
-    description: 'Get list of average sale prices since 2024-08-05. Source: HM Land Registry Price Paid Data 2024-2025.',
+    description: 'Get list of average sale prices since 2024-08-05 by postcodes. When comparing multiple postcodes, you must use the format ["SW1A", "SW3"], avoid calling twice. Source: HM Land Registry Price Paid Data 2024-2025. ',
     inputSchema: z.object({
-        postcode_district: z.string().describe('Postcode to filter properties by, e.g. "SW1A"'),
+        postcode_district: z.array(z.string())
     }),
     execute: async ({ postcode_district }) => {
-        const sql = neon(process.env.DATABASE_URL ?? '');
+        try {
+            const sql = neon(process.env.DATABASE_URL ?? '');
 
-        const result = await sql`
+            const postcodePlaceholder = postcode_district.map((_, i) => `$${i + 1}`).join(',');
+
+            const query = `
             SELECT DATE_TRUNC('month', transfer_date) AS month,
-            ROUND(AVG(price)) AS avg_price
+            ROUND(AVG(price)) AS avg_price,
+            postcode_district
             FROM ppd
-            WHERE postcode_district = ${postcode_district}
+            WHERE postcode_district IN (${postcodePlaceholder})
             AND transfer_date >= '2024-08-01'
-            GROUP BY month
-            ORDER BY month;
+            GROUP BY month, postcode_district
+            ORDER BY postcode_district, month;
         `;
 
-        return { result };
+            const result = await sql.query(query, [...postcode_district]);
+
+            return { result };
+        } catch (error) {
+            console.error("Error in getHousePricesByPostcodes:", error);
+            throw new Error("Failed to retrieve house prices by postcodes");
+        }
     }
 });
 
@@ -178,24 +188,45 @@ export const getHousePricesByPostcodeAndPropertyType = createTool({
 });
 
 export const generateChart = createTool({
-    description: 'Return basic chart data (title, labels, values) to visualize a trend. Use for simple line or bar charts.',
+    description: "Generate a chart from structured housing data. Echarts config format.",
     inputSchema: z.object({
         title: z.string(),
-        chartType: z.union([z.literal('line'), z.literal('bar')]),
-        labels: z.array(z.string()),
-        values: z.array(z.number())
+        type: z.union([z.literal("bar"), z.literal("line")]),
+        legendData: z.array(z.string()),
+        xAxis: z.array(z.string()),
+        series: z.array(
+            z.object({
+                type: z.union([z.literal("bar"), z.literal("line")]),
+                name: z.string(),
+                data: z.array(z.union([z.number(), z.null()]))
+            })
+        )
     }),
-    execute: async ({ title, chartType, labels, values }) => {
-        console.log("generateChart called with:", { title, chartType, labels, values });
-
+    execute: async ({ type, title, xAxis, series }) => {
+        console.log("Tool invoked with:", { type, title, xAxis, series });
         return {
-            type: chartType,
-            title,
-            labels,
-            values
+            "title": { "text": title },
+            "tooltip": {
+                "trigger": "axis",
+            },
+            "grid": {
+                "left": "3%",
+                "right": "4%",
+                "bottom": "3%",
+                "containLabel": true
+            },
+            "toolbox": {
+                "feature": {
+                    "saveAsImage": {}
+                }
+            },
+            "xAxis": { "type": "category", "data": xAxis },
+            "yAxis": { "type": "value" },
+            "series": series
         };
     }
 });
+
 
 export const tools = {
     matchRegionForSale,
