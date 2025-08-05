@@ -70,7 +70,7 @@ describe("PropertyChat", () => {
     const { user } = renderComponent();
 
     const defaultQuestions = screen.getByRole("button", {
-      name: "What’s the average house prices across the UK over the last 6 months?",
+      name: "What’s the average house price in NW3?",
     });
     await user.click(defaultQuestions);
 
@@ -81,7 +81,7 @@ describe("PropertyChat", () => {
     const { user } = renderComponent();
 
     const defaultQuestions = screen.getByRole("button", {
-      name: "What’s the average house prices across the UK over the last 6 months?",
+      name: "What’s the average house price in NW3?",
     });
     await user.click(defaultQuestions);
 
@@ -90,7 +90,7 @@ describe("PropertyChat", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("button", {
-          name: "What’s the average house prices across the UK over the last 6 months?",
+          name: "What’s the average house price in NW3?",
         })
       ).not.toBeInTheDocument();
     });
@@ -111,7 +111,7 @@ describe("PropertyChat", () => {
     ).toBeInTheDocument();
 
     const defaultQuestions = screen.getByRole("button", {
-      name: "What’s the average house prices across the UK over the last 6 months?",
+      name: "What’s the average house price in NW3?",
     });
     await user.click(defaultQuestions);
 

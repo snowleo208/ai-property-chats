@@ -31,7 +31,7 @@ export const findAffordableRegions = createTool({
 });
 
 export const getHousePrices = createTool({
-    description: 'Get house prices for regions between 2 dates (YYYY-MM-DD). Must call matchRegionForSale to get available regions first. Returns average price per month.',
+    description: 'Get house prices for regions between 2 dates (YYYY-MM-DD). Must call matchRegionForSale to get available regions first. Returns average price per month. Use United Kingdom when you want to get average price for the whole UK.',
     inputSchema: z.object({
         startDate: z.string(),
         endDate: z.string(),
@@ -45,7 +45,7 @@ export const getHousePrices = createTool({
 
         const query = `
       SELECT DATE_TRUNC('month', date) AS month,
-             average_price AS avg_price,
+             ROUND(average_price) AS avg_price,
              region_name
       FROM house_prices
       WHERE date BETWEEN $1 AND $2
@@ -192,7 +192,6 @@ export const generateChart = createTool({
     inputSchema: z.object({
         title: z.string(),
         type: z.union([z.literal("bar"), z.literal("line")]),
-        legendData: z.array(z.string()),
         xAxis: z.array(z.string()),
         series: z.array(
             z.object({
@@ -205,24 +204,7 @@ export const generateChart = createTool({
     execute: async ({ type, title, xAxis, series }) => {
         console.log("Tool invoked with:", { type, title, xAxis, series });
         return {
-            "title": { "text": title },
-            "tooltip": {
-                "trigger": "axis",
-            },
-            "grid": {
-                "left": "3%",
-                "right": "4%",
-                "bottom": "3%",
-                "containLabel": true
-            },
-            "toolbox": {
-                "feature": {
-                    "saveAsImage": {}
-                }
-            },
-            "xAxis": { "type": "category", "data": xAxis },
-            "yAxis": { "type": "value" },
-            "series": series
+            title, xAxis, series
         };
     }
 });
