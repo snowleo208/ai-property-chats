@@ -18,13 +18,10 @@ export const PromptTextArea = ({
 }: PromptTextAreaProps) => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.shiftKey) {
-      // Allow new line on Shift + Enter
-      return;
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit(e);
     }
-
-    e.preventDefault();
-    onSubmit(e);
   };
 
 

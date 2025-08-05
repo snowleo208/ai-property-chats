@@ -4,9 +4,10 @@ import { z } from "zod/v4";
 
 // House Prices data from: https://www.gov.uk/government/statistical-data-sets/uk-house-price-index-data-downloads-may-2025
 // Rental data from: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/priceindexofprivaterentsukmonthlypricestatistics
+// Price Paid Data 2024-2025 https://www.gov.uk/government/statistical-data-sets/price-paid-data-downloads
 
 export const findAffordableRegions = createTool({
-    description: 'Find regions where the average house price is below a given budget during a specified date range. Dates must be in YYYY-MM-DD format, e.g. 2025-01-01. If no specified date, it supposed to be the current year. This is for sale prices only. ',
+    description: 'Get region where the average house price is below a given budget during a specified date range between 2 dates (YYYY-MM-DD).If no specified date, it supposed to be the current year. For sale only.',
     inputSchema: z.object({
         startDate: z.string(),
         endDate: z.string(),
@@ -29,24 +30,37 @@ export const findAffordableRegions = createTool({
     }
 });
 
-export const getAvailableRegionsForRental = createTool({
-    description: 'Get the list of valid region names available in the rental index database.',
-    inputSchema: z.object({}),
-    execute: async () => {
-        console.log("getAvailableRegionsForRental tool invoked.");
+export const getHousePrices = createTool({
+    description: 'Get house prices for regions between 2 dates (YYYY-MM-DD). Must call matchRegionForSale to get available regions first. Returns average price per month.',
+    inputSchema: z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+        region: z.array(z.string()),
+    }),
+    execute: async ({ startDate, endDate, region }) => {
+        console.log("getHousePrices tool invoked with:", { startDate, endDate, region });
         const sql = neon(process.env.DATABASE_URL ?? '');
-        const result = await sql`
-            SELECT DISTINCT area_name 
-            FROM rental_prices 
-            ORDER BY area_name;
-        `;
-        const regionNames = result.map((row) => row.area_name);
-        return { region_names: regionNames };
+
+        const regionPlaceholders = region.map((_, i) => `$${i + 3}`).join(',');
+
+        const query = `
+      SELECT DATE_TRUNC('month', date) AS month,
+             average_price AS avg_price,
+             region_name
+      FROM house_prices
+      WHERE date BETWEEN $1 AND $2
+        AND region_name IN (${regionPlaceholders})
+      ORDER BY month ASC, region_name;
+    `;
+
+        const result = await sql.query(query, [startDate, endDate, ...region]);
+
+        return { result };
     }
 });
 
 export const getRentPrices = createTool({
-    description: 'Get average rental prices for a region over a date range. Optionally filter by bedroom count. Dates must be in YYYY-MM-DD format, e.g. 2025-01-01. Must call getAvailableRegionsForRental to get available regions first.',
+    description: 'Get rental prices for regions between 2 dates (YYYY-MM-DD). Must call getAvailableRegionsForRental to get available regions first.',
     inputSchema: z.object({
         startDate: z.string(),
         endDate: z.string(),
@@ -83,97 +97,69 @@ export const getRentPrices = createTool({
     }
 });
 
-
-export const getHousePrices = createTool({
-    description: 'Get the house price between a start date and an end date for one or more regions. Dates must be in YYYY-MM-DD format, e.g. 2025-01-01',
+export const matchRegionForSale = createTool({
+    description: 'Find closest matching sales region name. Choose the most relevant region.',
     inputSchema: z.object({
-        startDate: z.string(),
-        endDate: z.string(),
-        region: z.array(z.string()),
+        areaName: z.string(),
     }),
-    execute: async ({ startDate, endDate, region }) => {
-        console.log("getHousePrices tool invoked with:", { startDate, endDate, region });
-        const sql = neon(process.env.DATABASE_URL ?? '');
-
-        const regionPlaceholders = region.map((_, i) => `$${i + 3}`).join(',');
-
-        const query = `
-      SELECT DATE_TRUNC('month', date) AS month,
-             average_price AS avg_price,
-             region_name
-      FROM house_prices
-      WHERE date BETWEEN $1 AND $2
-        AND region_name IN (${regionPlaceholders})
-      ORDER BY month ASC, region_name;
-    `;
-
-        const result = await sql.query(query, [startDate, endDate, ...region]);
-
-        return { result };
-    }
-});
-
-export const getAvailableRegionsForSale = createTool({
-    description: 'Get the list of valid region names available in the housing price database.',
-    inputSchema: z.object({}),
-    execute: async () => {
-        console.log("getAvailableRegions tool invoked.");
+    execute: async ({ areaName }) => {
+        console.log("matchRegionForSale tool invoked.", areaName);
         const sql = neon(process.env.DATABASE_URL ?? '');
         const result = await sql`
             SELECT DISTINCT region_name 
-            FROM house_prices 
-            ORDER BY region_name;
+            FROM house_prices
+            WHERE SIMILARITY(region_name, ${areaName}) > 0.5
+            LIMIT 10;
         `;
-        const regionNames = result.map((row) => row.region_name);
-        return { region_names: regionNames };
+        const matchedRegions = result.map((row) => row.region_name);
+        return { matchedRegions };
+    }
+});
+
+export const matchRegionForRental = createTool({
+    description: 'Find closest matching rental region name. Choose the most relevant region.',
+    inputSchema: z.object({
+        areaName: z.string(),
+    }),
+    execute: async ({ areaName }) => {
+        console.log("getAvailableRegionsForRental tool invoked.", areaName);
+        const sql = neon(process.env.DATABASE_URL ?? '');
+        const result = await sql`
+            SELECT DISTINCT area_name
+            FROM rental_prices
+            WHERE SIMILARITY(area_name, ${areaName}) > 0.5
+            LIMIT 10;
+        `;
+        const matchedRegions = result.map((row) => row.area_name);
+        return { matchedRegions };
     }
 });
 
 export const generateChart = createTool({
-    description: "Generate a chart from structured housing data",
+    description: 'Return basic chart data (title, labels, values) to visualize a trend. Use for simple line or bar charts.',
     inputSchema: z.object({
         title: z.string(),
-        type: z.union([z.literal("bar"), z.literal("line")]),
-        legendData: z.array(z.string()),
-        xAxis: z.array(z.string()),
-        series: z.array(
-            z.object({
-                type: z.union([z.literal("bar"), z.literal("line")]),
-                name: z.string(),
-                data: z.array(z.union([z.number(), z.null()]))
-            })
-        )
+        chartType: z.union([z.literal('line'), z.literal('bar')]),
+        labels: z.array(z.string()),
+        values: z.array(z.number())
     }),
-    execute: async ({ type, title, xAxis, series }) => {
-        console.log("Tool invoked with:", { type, title, xAxis, series });
+    execute: async ({ title, chartType, labels, values }) => {
+        console.log("generateChart called with:", { title, chartType, labels, values });
+
         return {
-            "title": { "text": title },
-            "tooltip": {
-                "trigger": "axis",
-            },
-            "grid": {
-                "left": "3%",
-                "right": "4%",
-                "bottom": "3%",
-                "containLabel": true
-            },
-            "toolbox": {
-                "feature": {
-                    "saveAsImage": {}
-                }
-            },
-            "xAxis": { "type": "category", "data": xAxis },
-            "yAxis": { "type": "value" },
-            "series": series
+            type: chartType,
+            title,
+            labels,
+            values
         };
     }
 });
 
 export const tools = {
-    getAvailableRegionsForSale,
+    matchRegionForSale,
+    matchRegionForRental,
     getHousePrices,
     findAffordableRegions,
-    getAvailableRegionsForRental,
     getRentPrices,
     generateChart,
 };

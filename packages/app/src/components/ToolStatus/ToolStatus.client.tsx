@@ -8,7 +8,7 @@ export const ToolStatus = ({ state, toolName, toolId, loadingText, completeText,
 }) => {
     switch (state) {
         case 'output-available':
-            return <div key={`getRentPrices_${toolId}`}>
+            return <div key={`${toolName}_${toolId}`}>
                 <details>
                     <summary>
                         {completeText}

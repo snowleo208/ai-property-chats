@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
 import { Box, Card, Flex, IconButton, Spinner, Text } from "@radix-ui/themes";
-import { UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai"
+import { isToolUIPart, ToolUIPart, UIDataTypes, UIMessage, UIMessagePart, UITools } from "ai"
 import { MarkdownComponent } from "../MarkdownComponent/MarkdownComponent.client";
 import { WelcomeScreen } from '../WelcomeScreen/WelcomeScreen';
 import styles from './Messages.module.css';
@@ -15,6 +15,42 @@ import { ErrorState } from './ErrorState/ErrorState';
 const DynamicCharts = dynamic(() => import('../Charts/Charts.client'), {
     ssr: false
 });
+
+const toolMaps: Record<`tool-${string}`, { name: string; loadingText: string; completeText: string }> = {
+    'tool-matchRegionForRental': {
+        name: 'matchRegionForRental',
+        loadingText: 'Checking which regions are available for rental data...',
+        completeText: 'Found available regions for rental data'
+    },
+    'tool-matchRegionForSale': {
+        name: 'matchRegionForSale',
+        loadingText: 'Checking which regions are available for sale data...',
+        completeText: 'Found available regions for house price data'
+    },
+    'tool-findAffordableRegions': {
+        name: 'findAffordableRegions',
+        loadingText: 'Looking up affordable regions',
+        completeText: 'Available regions retrieved'
+    },
+    'tool-getRentPrices': {
+        name: 'getRentPrices',
+        loadingText: 'Checking rental prices...',
+        completeText: 'Retrieved rental prices'
+    },
+    'tool-getHousePrices': {
+        name: 'getHousePrices',
+        loadingText: 'Checking house price data...',
+        completeText: 'Retrieved house price data'
+    }
+};
+
+const isValidTool = (toolId: UIMessagePart<UIDataTypes, UITools>): toolId is ToolUIPart => {
+    if (!isToolUIPart(toolId)) {
+        return false;
+    }
+
+    return Object.keys(toolMaps).includes(toolId?.type);
+}
 
 export type MessagesProps = {
     isLoading: boolean;
@@ -67,63 +103,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
         };
     }, []);
 
-    // console.log({ messages })
-
-    // TODO: split it better
     const renderFunction = (part: UIMessagePart<UIDataTypes, UITools>, partIndex: number,) => {
-
-        if (part.type === 'tool-getAvailableRegionsForRental') {
-            return <ToolStatus state={part.state} toolName='getAvailableRegions' toolId={part.toolCallId} loadingText='Checking which regions are available for rental data...' completeText='Found available regions for rental data' key={`getAvailableRegions_${part.toolCallId}`} content={part.output} />
-        }
-
-        if (part.type === 'tool-getAvailableRegionsForSale') {
-            return <ToolStatus state={part.state} toolName='getAvailableRegionsForSale' toolId={part.toolCallId} loadingText="Checking which regions are available for sale data..." completeText='Found available regions for house price data' key={`getAvailableRegionsForSale_${part.toolCallId}`} content={part.output} />
-        }
-
-        if (part.type === 'tool-findAffordableRegions') {
-            return <ToolStatus state={part.state} toolName='findAffordableRegions' toolId={part.toolCallId} loadingText='Looking up affordable regions' completeText="Available regions retrieved" content={part.output} key={`findAffordableRegions_${part.toolCallId}`} />
-        }
-
-        if (part.type === 'tool-getRentPrices') {
-            switch (part.state) {
-                case 'output-available':
-                    return <div key={`getRentPrices_${part.toolCallId}`}>
-                        <details>
-                            <summary>
-                                Retrieved rental data
-                            </summary>
-                            <code>{JSON.stringify(part.output)}</code>
-                        </details>
-
-                    </div>
-
-                case 'output-error':
-                    return <div key={`getRentPrices${part.toolCallId}`}>Error: failed to get rental data, please retry.</div>;
-                default:
-                    return <div key={`getRentPrices${part.toolCallId}`}>Checking rental data...</div>
-            }
-        }
-
-        if (part.type === 'tool-getHousePrices') {
-            switch (part.state) {
-                case 'output-available':
-                    return <div key={`getHousePrices_${part.toolCallId}`}>
-                        <details>
-                            <summary>
-                                Retrieved house price data
-                            </summary>
-                            <code>{JSON.stringify(part.output)}</code>
-                        </details>
-
-                    </div>
-
-                case 'output-error':
-                    return <div key={`getHousePrices_${part.toolCallId}`}>Error: failed to get house prices data, please try again.</div>;
-                default:
-                    return <div key={`getHousePrices_${part.toolCallId}`}>Checking house price data...</div>
-            }
-        }
-
         if (part.type === 'tool-generateChart') {
             switch (part.state) {
                 case 'input-available':
@@ -150,6 +130,25 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
                 default:
                     return null;
             }
+        }
+
+        if (isValidTool(part)) {
+            console.log(messages)
+            const tool = toolMaps[part.type];
+            if (!tool) {
+                return null;
+            }
+            return (
+                <ToolStatus
+                    key={`${part.toolCallId}_${partIndex}`}
+                    toolName={tool?.name}
+                    loadingText={tool?.loadingText}
+                    completeText={tool?.completeText}
+                    state={part.state}
+                    toolId={part.toolCallId}
+                    content={part.output}
+                />
+            );
         }
 
         if (part.type === 'text') {

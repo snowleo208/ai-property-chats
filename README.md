@@ -1,4 +1,10 @@
-# AI-Powered House Prices Chats
+# AI-Powered Housing Data Assistant
+
+This is an AI-driven assistant capable of querying structured housing and rental data via natural language, using Vercel’s AI SDK and tool calling pattern. 
+
+Integrated Neon database and ECharts chart generation to deliver contextual answers and visual insights.
+
+![](ai-property-chat.gif)
 
 ## Getting Started
 
