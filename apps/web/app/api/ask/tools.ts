@@ -135,6 +135,48 @@ export const matchRegionForRental = createTool({
     }
 });
 
+export const getHousePricesByPostcode = createTool({
+    description: 'Get list of average sale prices since 2024-08-05. Source: HM Land Registry Price Paid Data 2024-2025.',
+    inputSchema: z.object({
+        postcode_district: z.string().describe('Postcode to filter properties by, e.g. "SW1A"'),
+    }),
+    execute: async ({ postcode_district }) => {
+        const sql = neon(process.env.DATABASE_URL ?? '');
+
+        const result = await sql`
+            SELECT DATE_TRUNC('month', transfer_date) AS month,
+            ROUND(AVG(price)) AS avg_price
+            FROM ppd
+            WHERE postcode_district = ${postcode_district}
+            AND transfer_date >= '2024-08-01'
+            GROUP BY month
+            ORDER BY month;
+        `;
+
+        return { result };
+    }
+});
+
+export const getHousePricesByPostcodeAndPropertyType = createTool({
+    description: 'Get average sale prices by postcode since 2024-08-05. Returns average price per property type. Source: HM Land Registry Price Paid Data 2024-2025.',
+    inputSchema: z.object({
+        postcode_district: z.string().describe('Postcode to filter properties by, e.g. "SW1A"'),
+    }),
+    execute: async ({ postcode_district }) => {
+        const sql = neon(process.env.DATABASE_URL ?? '');
+
+        const result = await sql`
+            SELECT property_type, ROUND(AVG(price)) AS avg_price
+            FROM ppd
+            WHERE transfer_date >= '2024-08-01'
+            AND postcode_district = ${postcode_district}
+            GROUP BY property_type;
+    `;
+
+        return { result };
+    }
+});
+
 export const generateChart = createTool({
     description: 'Return basic chart data (title, labels, values) to visualize a trend. Use for simple line or bar charts.',
     inputSchema: z.object({
@@ -162,4 +204,6 @@ export const tools = {
     findAffordableRegions,
     getRentPrices,
     generateChart,
+    getHousePricesByPostcodeAndPropertyType,
+    getHousePricesByPostcode
 };

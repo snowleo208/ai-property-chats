@@ -41,7 +41,17 @@ const toolMaps: Record<`tool-${string}`, { name: string; loadingText: string; co
         name: 'getHousePrices',
         loadingText: 'Checking house price data...',
         completeText: 'Retrieved house price data'
-    }
+    },
+    'tool-getHousePricesByPostcodeAndPropertyType': {
+        name: 'getHousePricesByPostcodeAndPropertyType',
+        loadingText: 'Checking house prices by property type...',
+        completeText: 'Retrieved house prices by property type'
+    },
+    'tool-getHousePricesByPostcode': {
+        name: 'getHousePricesByPostcode',
+        loadingText: 'Checking house prices by postcode...',
+        completeText: 'Retrieved house prices by postcode'
+    },
 };
 
 const isValidTool = (toolId: UIMessagePart<UIDataTypes, UITools>): toolId is ToolUIPart => {
@@ -133,7 +143,7 @@ export const Messages = ({ status, onDefaultQuestionsClick, error, messages }: M
         }
 
         if (isValidTool(part)) {
-            console.log(messages)
+            // console.log(messages)
             const tool = toolMaps[part.type];
             if (!tool) {
                 return null;

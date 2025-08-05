@@ -4,8 +4,6 @@ This is an AI-driven assistant capable of querying structured housing and rental
 
 Integrated Neon database and ECharts chart generation to deliver contextual answers and visual insights.
 
-![](ai-property-chat.gif)
-
 ## Getting Started
 
 ### Build

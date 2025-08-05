@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
             },
             abortSignal: req.signal,
             tools,
+            maxOutputTokens: 1000,
             stopWhen: stepCountIs(6),
             messages: convertToModelMessages(lastTenMessages, {
                 ignoreIncompleteToolCalls: true
